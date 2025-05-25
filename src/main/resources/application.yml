@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: testuser
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+telegrambots:
+  bots:
+      username: Nahodusha_bot
+      token: 7493230499:AAHzc-kiF6aMtSLw6upYduOYzP6Sc2bCR-A
+      path: webhook
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    operationsSorter: method
+
+    logging:
+      level:
+        org:
+          springframework:
+            web: trace
+          apache: trace
