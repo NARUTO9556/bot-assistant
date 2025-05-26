@@ -11,8 +11,8 @@ spring:
 
 telegrambots:
   bots:
-      username: Nahodusha_bot
-      token: 7493230499:AAHzc-kiF6aMtSLw6upYduOYzP6Sc2bCR-A
+      username:
+      token:
       path: webhook
 
 springdoc:
