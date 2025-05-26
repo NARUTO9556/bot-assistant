@@ -1,5 +1,6 @@
 package com.example.bot_task_etc.bot;
 
+import com.example.bot_task_etc.config.ReminderCommandHandle;
 import com.example.bot_task_etc.controller.BotController;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.List;
 public class AssistantBot extends TelegramLongPollingBot {
 
     private final BotController botController;
+    private final ReminderCommandHandle reminderCommandHandle;
 
     @Value("${telegrambots.bots.username}")
     private String botUsername;
@@ -94,6 +96,13 @@ public class AssistantBot extends TelegramLongPollingBot {
             }
             return;
         }
+        if (reminderCommandHandle.handleInput(chatId, userId, text, this)) {
+            return;
+        }
+
+        if (reminderCommandHandle.handleCommand(chatId, userId, text, this)) {
+            return;
+        }
 
         switch (command) {
             case "/start" -> {
@@ -116,7 +125,7 @@ public class AssistantBot extends TelegramLongPollingBot {
         }
     }
 
-    private void send(Long chatId, String text) {
+    public void send(Long chatId, String text) {
         SendMessage message = SendMessage.builder()
                 .chatId(chatId.toString())
                 .text(text)
@@ -130,20 +139,29 @@ public class AssistantBot extends TelegramLongPollingBot {
     }
 
     private ReplyKeyboardMarkup buildMainKeyboard() {
-        KeyboardButton newNoteButton = new KeyboardButton("📝 Новая заметка");
-        KeyboardButton listButton = new KeyboardButton("📋 Список");
-        KeyboardButton deleteButton = new KeyboardButton("❌ Удалить");
+        List<KeyboardRow> keyboard = new ArrayList<>();
 
         KeyboardRow row1 = new KeyboardRow();
-        row1.add(newNoteButton);
-        row1.add(listButton);
+        row1.add(new KeyboardButton("📝 Новая заметка"));
+        row1.add(new KeyboardButton("📋 Список"));
 
         KeyboardRow row2 = new KeyboardRow();
-        row2.add(deleteButton);
+        row2.add(new KeyboardButton("❌ Удалить"));
+        row2.add(new KeyboardButton("✏ Редактировать"));
 
-        List<KeyboardRow> keyboard = new ArrayList<>();
+        KeyboardRow row3 = new KeyboardRow();
+        row3.add(new KeyboardButton("⏰ Напоминание"));
+        row3.add(new KeyboardButton("🔕 Отключить напоминание"));
+
+        KeyboardRow row4 = new KeyboardRow();
+        row4.add(new KeyboardButton("📝 Текст напоминания"));
+        row4.add(new KeyboardButton("ℹ Настройки напоминания"));
+
+
         keyboard.add(row1);
         keyboard.add(row2);
+        keyboard.add(row3);
+        keyboard.add(row4);
 
         ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup();
         markup.setKeyboard(keyboard);
