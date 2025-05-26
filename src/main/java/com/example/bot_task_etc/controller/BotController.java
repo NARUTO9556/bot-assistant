@@ -50,7 +50,7 @@ public class BotController {
         return sb.toString();
     }
 
-    public void deleteNote(Long userId, int index) {
+    public void deleteNoteByIndex(Long userId, int index) {
         noteService.deleteNoteByIndex(userId, index);
     }
 
