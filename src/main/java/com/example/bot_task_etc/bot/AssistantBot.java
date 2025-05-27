@@ -1,7 +1,11 @@
 package com.example.bot_task_etc.bot;
 
+import com.example.bot_task_etc.config.NoteCommandHandle;
 import com.example.bot_task_etc.config.ReminderCommandHandle;
 import com.example.bot_task_etc.controller.BotController;
+import com.example.bot_task_etc.model.User;
+import com.example.bot_task_etc.repository.UserRepository;
+import com.example.bot_task_etc.state.NoteStateTracker;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,7 +13,6 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
@@ -26,6 +29,8 @@ public class AssistantBot extends TelegramLongPollingBot {
 
     private final BotController botController;
     private final ReminderCommandHandle reminderCommandHandle;
+    private final NoteCommandHandle noteCommandHandle;
+    private final NoteStateTracker noteStateTracker;
 
     @Value("${telegrambots.bots.username}")
     private String botUsername;
@@ -55,74 +60,14 @@ public class AssistantBot extends TelegramLongPollingBot {
             return;
         }
 
-        Message message = update.getMessage();
-        Long chatId = message.getChatId();
-        String text = message.getText().trim();
-        Long userId = message.getFrom().getId();
+        String text = update.getMessage().getText();
+        Long chatId = update.getMessage().getChatId();
 
-        String command = text.toLowerCase();
-
-        if (botController.isAwaitingNote(userId)) {
-            botController.saveNote(userId, text);
-            botController.setAwaitingNote(userId, false);
-            send(chatId, "✅ Заметка сохранена!");
-            return;
+        if (noteStateTracker.getState(chatId) != NoteStateTracker.State.NONE) {
+            noteCommandHandle.handleTextInput(chatId, text, this);
         }
 
-        if (botController.isEditingNote(userId)) {
-            botController.updateNote(userId, text);
-            send(chatId, "✏️ Заметка обновлена.");
-            return;
-        }
 
-        if (command.startsWith("удалить ")) {
-            try {
-                int index = Integer.parseInt(command.substring(8).trim());
-                botController.deleteNoteByIndex(userId, index);
-                send(chatId, "✅ Заметка удалена.");
-            } catch (Exception e) {
-                send(chatId, "⚠ Неверный формат. Используй `удалить 2`.");
-            }
-            return;
-        }
-
-        if (command.startsWith("редактировать ")) {
-            try {
-                int index = Integer.parseInt(command.substring(14).trim());
-                botController.prepareNoteEdit(userId, index);
-                send(chatId, "✍️ Напиши новый текст для заметки #" + index + ":");
-            } catch (Exception e) {
-                send(chatId, "⚠ Неверный формат. Используй `редактировать 2`.");
-            }
-            return;
-        }
-        if (reminderCommandHandle.handleInput(chatId, userId, text, this)) {
-            return;
-        }
-
-        if (reminderCommandHandle.handleCommand(chatId, userId, text, this)) {
-            return;
-        }
-
-        switch (command) {
-            case "/start" -> {
-                botController.registerUser(message.getFrom());
-                send(chatId, "👋 Привет, " + message.getFrom().getFirstName() + "!\nВыберите действие:");
-            }
-            case "/note", "📝 новая заметка" -> {
-                botController.setAwaitingNote(userId, true);
-                send(chatId, "✍️ Напиши текст заметки:");
-            }
-            case "/listnote", "📋 список" -> {
-                send(chatId, botController.listNotes(userId));
-            }
-            case "/deletenote", "❌ удалить" -> {
-                send(chatId, "🗑 Напиши `удалить N`, где N — номер заметки.");
-            }
-            default -> {
-                send(chatId, "⚠ Неизвестная команда. Используйте кнопки или напишите `удалить N`, `редактировать N`.");
-            }
-        }
     }
 
     public void send(Long chatId, String text) {
@@ -147,7 +92,6 @@ public class AssistantBot extends TelegramLongPollingBot {
 
         KeyboardRow row2 = new KeyboardRow();
         row2.add(new KeyboardButton("❌ Удалить"));
-        row2.add(new KeyboardButton("✏ Редактировать"));
 
         KeyboardRow row3 = new KeyboardRow();
         row3.add(new KeyboardButton("⏰ Напоминание"));

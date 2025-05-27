@@ -1,4 +1,4 @@
-package com.example.bot_task_etc.config;
+package com.example.bot_task_etc.scheduler;
 
 import com.example.bot_task_etc.bot.AssistantBot;
 import com.example.bot_task_etc.model.User;

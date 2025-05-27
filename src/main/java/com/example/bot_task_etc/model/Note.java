@@ -15,8 +15,9 @@ import java.time.LocalDateTime;
 public class Note {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
     private Long userId;
+    private Long chatId;
     private String text;
     private LocalDateTime createAt;
 }

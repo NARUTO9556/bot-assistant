@@ -2,6 +2,7 @@ package com.example.bot_task_etc.config;
 
 import com.example.bot_task_etc.bot.AssistantBot;
 import com.example.bot_task_etc.service.ReminderService;
+import com.example.bot_task_etc.state.ReminderStateTracker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

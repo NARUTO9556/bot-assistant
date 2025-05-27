@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -14,31 +15,39 @@ public class NoteService {
 
     private final NoteRepository noteRepository;
 
-    public void saveNote(Long userId, String text) {
+    public void saveNote(Long chatId, String text) {
         Note note = new Note();
-        note.setUserId(userId);
+        note.setId(UUID.randomUUID().toString());
+        note.setChatId(chatId);
         note.setText(text);
-        note.setCreateAt(LocalDateTime.now());
         noteRepository.save(note);
     }
 
-    public List<Note> getAllNotes(Long userId) {
-        return noteRepository.findAllByUserId(userId);
-    }
-
-    public void deleteNoteByIndex(Long userId, int index) {
-        List<Note> notes = getAllNotes(userId);
-        if (index >= 1 && index <= notes.size()) {
-            noteRepository.deleteById(notes.get(index - 1).getId());
+    public String getAllNotes(Long chatId) {
+        List<Note> notes = noteRepository.findAllByChatId(chatId);
+        if (notes.isEmpty()) {
+            return "";
         }
+        StringBuilder sb = new StringBuilder("📋 Ваши заметки:\n");
+        for (Note note : notes) {
+            sb.append("ID: ").append(note.getId()).append("\n");
+            sb.append(note.getText()).append("\n\n");
+        }
+        return sb.toString();
     }
 
-    public void updateNoteByIndex(Long userId, int index, String newText) {
-        List<Note> notes = getAllNotes(userId);
-        if (index >= 1 && index <= notes.size()) {
-            Note note = notes.get(index - 1);
+    public boolean deleteNote(Long chatId, String noteId) {
+        return noteRepository.findByIdAndChatId(noteId, chatId).map(note -> {
+            noteRepository.delete(note);
+            return true;
+        }).orElse(false);
+    }
+
+    public boolean updateNote(Long chatId, String noteId, String newText) {
+        return noteRepository.findByIdAndChatId(noteId, chatId).map(note -> {
             note.setText(newText);
             noteRepository.save(note);
-        }
+            return true;
+        }).orElse(false);
     }
 }
