@@ -10,7 +10,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.bots.AbsSender;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -27,7 +26,7 @@ public class ReminderCommandHandle {
         switch (tracker.getState(chatId)) {
             case AWAITING_NEW_REMINDER_TEXT -> {
                 tracker.setTempReminderTexts(chatId, text);
-                tracker.setState(chatId, ReminderStateTracker.State.AWAITING_NEW_REMINDER_TEXT);
+                tracker.setState(chatId, ReminderStateTracker.State.AWAITING_REMINDER_TIME);
                 sendText(sender, chatId, "Введите дату и время напоминания в формате 'yyyy-MM-dd HH:mm' (например, 2025-06-01 14:30));");
             }
             case AWAITING_REMINDER_TIME -> {
@@ -35,9 +34,11 @@ public class ReminderCommandHandle {
                     LocalDateTime dateTime = LocalDateTime.parse(text, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
                     String reminderText = tracker.getTempReminderTexts(chatId);
                     reminderService.saveReminder(chatId, reminderText, dateTime);
-                    sendText(sender, chatId, "Напоминание сохранено на: " + dateTime);
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                    String formattedDateTime = dateTime.format(formatter);
+                    sendText(sender, chatId, "Напоминание сохранено на: " + formattedDateTime);
                 } catch (DateTimeParseException e) {
-                    sendText(sender, chatId, "Неверный формат двты и времени. Повторите ввод");
+                    sendText(sender, chatId, "Неверный формат даты и времени. Повторите ввод");
                 }
                 tracker.clear(chatId);
             }

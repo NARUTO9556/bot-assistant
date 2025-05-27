@@ -17,7 +17,7 @@ public class NoteService {
 
     public void saveNote(Long chatId, String text) {
         Note note = new Note();
-        note.setId(UUID.randomUUID().toString());
+//        note.setId(UUID.randomUUID().toString());
         note.setChatId(chatId);
         note.setText(text);
         noteRepository.save(note);
@@ -37,14 +37,14 @@ public class NoteService {
     }
 
     public boolean deleteNote(Long chatId, String noteId) {
-        return noteRepository.findByIdAndChatId(noteId, chatId).map(note -> {
+        return noteRepository.findByIdAndChatId(Long.valueOf(noteId), chatId).map(note -> {
             noteRepository.delete(note);
             return true;
         }).orElse(false);
     }
 
     public boolean updateNote(Long chatId, String noteId, String newText) {
-        return noteRepository.findByIdAndChatId(noteId, chatId).map(note -> {
+        return noteRepository.findByIdAndChatId(Long.valueOf(noteId), chatId).map(note -> {
             note.setText(newText);
             noteRepository.save(note);
             return true;

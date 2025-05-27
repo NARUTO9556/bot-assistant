@@ -10,5 +10,5 @@ import java.util.Optional;
 @Repository
 public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findAllByChatId(Long userId);
-    Optional<Note> findByIdAndChatId(String id, Long chatId);
+    Optional<Note> findByIdAndChatId(Long id, Long chatId);
 }

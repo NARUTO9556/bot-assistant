@@ -37,6 +37,6 @@ public class ReminderStateTracker {
     }
 
     public String getTempReminderTexts(Long chatId) {
-        return tempReminderTexts.getOrDefault(chatId, "");
+        return tempReminderTexts.get(chatId);
     }
 }

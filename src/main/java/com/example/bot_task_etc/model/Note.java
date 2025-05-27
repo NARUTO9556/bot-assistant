@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 @Table(name = "notes")
 public class Note {
     @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private Long userId;
     private Long chatId;
     private String text;

@@ -12,6 +12,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
@@ -66,7 +67,7 @@ public class AssistantBot extends TelegramLongPollingBot {
         }
 
         if (stateTracker.getState(chatId) != ReminderStateTracker.State.NONE) {
-            noteCommandHandle.handleTextInput(chatId, text, this);
+            reminderCommandHandle.handleInput(chatId, text, this);
             return;
         }
 
@@ -84,6 +85,17 @@ public class AssistantBot extends TelegramLongPollingBot {
             case "📋 Список напоминаний"-> reminderCommandHandle.handleListReminders(chatId, this);
             case "✏️ Изменить напоминание"-> reminderCommandHandle.handleEditReminders(chatId, this);
             case "❌ Удалить напоминание"-> reminderCommandHandle.handleDeleteReminders(chatId, this);
+            case "🔙 Назад" -> {
+                SendMessage msg = new SendMessage();
+                msg.setChatId(chatId.toString());
+                msg.setText("Вы вернулись в главное меню.");
+                msg.setReplyMarkup(sendMenu(chatId));
+                try {
+                    execute(msg);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            }
             default -> {
                 sendText(chatId, "Неизвестная команда. Используйте /start.");
             }
@@ -100,11 +112,12 @@ public class AssistantBot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendMenu(Long chatId) {
+    private ReplyKeyboard sendMenu(Long chatId) {
         KeyboardRow row = new KeyboardRow();
         row.add(new KeyboardButton("📝 Заметки"));
         row.add(new KeyboardButton("⏰ Напоминания"));
-        sendKeyboard(chatId, "Выберите раздел:", List.of(row));
+        return sendKeyboard(chatId, "Выберите раздел:", List.of(row));
+
     }
 
     private void sendNoteMenu(Long chatId) {
@@ -114,7 +127,9 @@ public class AssistantBot extends TelegramLongPollingBot {
         KeyboardRow row2 = new KeyboardRow();
         row2.add(new KeyboardButton("✏️ Редактировать"));
         row2.add(new KeyboardButton("❌ Удалить заметку"));
-        sendKeyboard(chatId, "Выберите действие с заметками:", List.of(row1, row2));
+        KeyboardRow row3 = new KeyboardRow();
+        row3.add(new KeyboardButton("🔙 Назад"));
+        sendKeyboard(chatId, "Выберите действие с заметками:", List.of(row1, row2, row3));
     }
 
     private void sendReminderMenu(Long chatId) {
@@ -124,10 +139,12 @@ public class AssistantBot extends TelegramLongPollingBot {
         KeyboardRow row2 = new KeyboardRow();
         row2.add(new KeyboardButton("✏️ Изменить напоминание"));
         row2.add(new KeyboardButton("❌ Удалить напоминание"));
-        sendKeyboard(chatId, "Выберите действие с напоминаниями:", List.of(row1, row2));
+        KeyboardRow row3 = new KeyboardRow();
+        row3.add(new KeyboardButton("🔙 Назад"));
+        sendKeyboard(chatId, "Выберите действие с напоминаниями:", List.of(row1, row2, row3));
     }
 
-    private void sendKeyboard(Long chatId, String text, List<KeyboardRow> rows) {
+    private ReplyKeyboard sendKeyboard(Long chatId, String text, List<KeyboardRow> rows) {
         ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
         keyboard.setKeyboard(rows);
         keyboard.setResizeKeyboard(true);
@@ -143,5 +160,6 @@ public class AssistantBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+        return msg.getReplyMarkup();
     }
 }

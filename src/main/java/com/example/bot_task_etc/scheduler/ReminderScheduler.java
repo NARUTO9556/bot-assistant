@@ -25,7 +25,7 @@ public class ReminderScheduler {
         List<Reminder> dueReminders = reminderRepository.findByTimeBeforeAndSentFalse(now);
 
         for (Reminder reminder : dueReminders) {
-            if (reminder.getChatId() == null) {
+            if (reminder.getChatId() == null || reminder.getText() == null || reminder.getTime() == null) {
                 continue;
             }
 
@@ -37,6 +37,7 @@ public class ReminderScheduler {
                 assistantBot.execute(msg);
                 reminder.setSent(true);
                 reminderRepository.save(reminder);
+                System.out.println("Напоминание отправлено и сохранено как отправленное: " + reminder.getId());
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }

@@ -19,6 +19,7 @@ public class ReminderService {
         reminder.setChatId(chatId);
         reminder.setText(text);
         reminder.setTime(time);
+        reminder.setSent(false);
         reminderRepository.save(reminder);
     }
 
