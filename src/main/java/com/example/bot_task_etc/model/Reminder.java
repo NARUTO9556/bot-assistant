@@ -11,13 +11,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "notes")
-public class Note {
+@Table(name = "reminders")
+public class Reminder {
     @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
-    private Long userId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private Long chatId;
     private String text;
-    private LocalDateTime createAt;
+    private LocalDateTime time;
+    private boolean sent = false;
 }

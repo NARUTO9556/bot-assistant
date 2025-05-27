@@ -2,10 +2,8 @@ package com.example.bot_task_etc.bot;
 
 import com.example.bot_task_etc.config.NoteCommandHandle;
 import com.example.bot_task_etc.config.ReminderCommandHandle;
-import com.example.bot_task_etc.controller.BotController;
-import com.example.bot_task_etc.model.User;
-import com.example.bot_task_etc.repository.UserRepository;
 import com.example.bot_task_etc.state.NoteStateTracker;
+import com.example.bot_task_etc.state.ReminderStateTracker;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,15 +18,14 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class AssistantBot extends TelegramLongPollingBot {
 
-    private final BotController botController;
     private final ReminderCommandHandle reminderCommandHandle;
+    private final ReminderStateTracker stateTracker;
     private final NoteCommandHandle noteCommandHandle;
     private final NoteStateTracker noteStateTracker;
 
@@ -65,53 +62,86 @@ public class AssistantBot extends TelegramLongPollingBot {
 
         if (noteStateTracker.getState(chatId) != NoteStateTracker.State.NONE) {
             noteCommandHandle.handleTextInput(chatId, text, this);
+            return;
         }
 
+        if (stateTracker.getState(chatId) != ReminderStateTracker.State.NONE) {
+            noteCommandHandle.handleTextInput(chatId, text, this);
+            return;
+        }
+
+        switch (text) {
+            case "/start"-> sendMenu(chatId);
+            case "📝 Заметки"-> sendNoteMenu(chatId);
+            case "⏰ Напоминания"-> sendReminderMenu(chatId);
+
+            case "➕ Новая заметка"-> noteCommandHandle.handleNewNote(chatId, this);
+            case "📋 Список заметок"-> noteCommandHandle.handleListNotes(chatId, this);
+            case "✏️ Редактировать"-> noteCommandHandle.handleEditNote(chatId, this);
+            case "❌ Удалить заметку"-> noteCommandHandle.handleDeleteNote(chatId, this);
+
+            case "➕ Новое напоминание"-> reminderCommandHandle.handleNewReminder(chatId, this);
+            case "📋 Список напоминаний"-> reminderCommandHandle.handleListReminders(chatId, this);
+            case "✏️ Изменить напоминание"-> reminderCommandHandle.handleEditReminders(chatId, this);
+            case "❌ Удалить напоминание"-> reminderCommandHandle.handleDeleteReminders(chatId, this);
+            default -> {
+                sendText(chatId, "Неизвестная команда. Используйте /start.");
+            }
+        }
 
     }
 
-    public void send(Long chatId, String text) {
-        SendMessage message = SendMessage.builder()
-                .chatId(chatId.toString())
-                .text(text)
-                .replyMarkup(buildMainKeyboard())
-                .build();
+    private void sendText(Long chatId, String text) {
+        SendMessage msg = new SendMessage(chatId.toString(), text);
         try {
-            execute(message);
+            execute(msg);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
     }
 
-    private ReplyKeyboardMarkup buildMainKeyboard() {
-        List<KeyboardRow> keyboard = new ArrayList<>();
+    private void sendMenu(Long chatId) {
+        KeyboardRow row = new KeyboardRow();
+        row.add(new KeyboardButton("📝 Заметки"));
+        row.add(new KeyboardButton("⏰ Напоминания"));
+        sendKeyboard(chatId, "Выберите раздел:", List.of(row));
+    }
 
+    private void sendNoteMenu(Long chatId) {
         KeyboardRow row1 = new KeyboardRow();
-        row1.add(new KeyboardButton("📝 Новая заметка"));
-        row1.add(new KeyboardButton("📋 Список"));
-
+        row1.add(new KeyboardButton("➕ Новая заметка"));
+        row1.add(new KeyboardButton("📋 Список заметок"));
         KeyboardRow row2 = new KeyboardRow();
-        row2.add(new KeyboardButton("❌ Удалить"));
+        row2.add(new KeyboardButton("✏️ Редактировать"));
+        row2.add(new KeyboardButton("❌ Удалить заметку"));
+        sendKeyboard(chatId, "Выберите действие с заметками:", List.of(row1, row2));
+    }
 
-        KeyboardRow row3 = new KeyboardRow();
-        row3.add(new KeyboardButton("⏰ Напоминание"));
-        row3.add(new KeyboardButton("🔕 Отключить напоминание"));
+    private void sendReminderMenu(Long chatId) {
+        KeyboardRow row1 = new KeyboardRow();
+        row1.add(new KeyboardButton("➕ Новое напоминание"));
+        row1.add(new KeyboardButton("📋 Список напоминаний"));
+        KeyboardRow row2 = new KeyboardRow();
+        row2.add(new KeyboardButton("✏️ Изменить напоминание"));
+        row2.add(new KeyboardButton("❌ Удалить напоминание"));
+        sendKeyboard(chatId, "Выберите действие с напоминаниями:", List.of(row1, row2));
+    }
 
-        KeyboardRow row4 = new KeyboardRow();
-        row4.add(new KeyboardButton("📝 Текст напоминания"));
-        row4.add(new KeyboardButton("ℹ Настройки напоминания"));
+    private void sendKeyboard(Long chatId, String text, List<KeyboardRow> rows) {
+        ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+        keyboard.setKeyboard(rows);
+        keyboard.setResizeKeyboard(true);
 
+        SendMessage msg = SendMessage.builder()
+                .chatId(chatId.toString())
+                .text(text)
+                .replyMarkup(keyboard)
+                .build();
 
-        keyboard.add(row1);
-        keyboard.add(row2);
-        keyboard.add(row3);
-        keyboard.add(row4);
-
-        ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup();
-        markup.setKeyboard(keyboard);
-        markup.setResizeKeyboard(true); // адаптирует под экран
-        markup.setOneTimeKeyboard(false);
-
-        return markup;
+        try {
+            execute(msg);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 }

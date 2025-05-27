@@ -1,10 +1,7 @@
 package com.example.bot_task_etc.config;
 
-import com.example.bot_task_etc.bot.AssistantBot;
 import com.example.bot_task_etc.service.NoteService;
-import com.example.bot_task_etc.service.ReminderService;
 import com.example.bot_task_etc.state.NoteStateTracker;
-import com.example.bot_task_etc.state.ReminderStateTracker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -56,15 +53,19 @@ public class NoteCommandHandle {
                 String id = noteStateTracker.getTempNoteId(chatId);
                 if (noteService.updateNote(chatId, id, msgText)) {
                     send(sender, chatId, "Заметка обновлена");
+                    noteStateTracker.clearState(chatId);
                 } else {
                     send(sender, chatId, "Заметка не найдена");
+                    noteStateTracker.clearState(chatId);
                 }
             }
             case AWAITING_NOTE_DELETE_ID -> {
                 if (noteService.deleteNote(chatId, msgText)) {
                     send(sender, chatId, "Заметка удалена.");
+                    noteStateTracker.clearState(chatId);
                 } else {
                     send(sender,chatId,"Заметка не найдена");
+                    noteStateTracker.clearState(chatId);
                 }
                 noteStateTracker.clearState(chatId);
             }

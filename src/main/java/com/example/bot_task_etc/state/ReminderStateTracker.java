@@ -10,7 +10,7 @@ public class ReminderStateTracker {
 
     public enum State {
         NONE,
-        AWAITING_REMINDER_TEXT,
+        AWAITING_NEW_REMINDER_TEXT,
         AWAITING_REMINDER_TIME,
         AWAITING_REMINDER_TO_EDIT,
         AWAITING_REMINDER_TO_DELETE,
