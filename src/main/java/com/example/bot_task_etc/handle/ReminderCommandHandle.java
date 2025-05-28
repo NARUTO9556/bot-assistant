@@ -1,4 +1,4 @@
-package com.example.bot_task_etc.config;
+package com.example.bot_task_etc.handle;
 
 import com.example.bot_task_etc.model.Reminder;
 import com.example.bot_task_etc.service.ReminderService;

@@ -1,7 +1,8 @@
 package com.example.bot_task_etc.bot;
 
-import com.example.bot_task_etc.config.NoteCommandHandle;
-import com.example.bot_task_etc.config.ReminderCommandHandle;
+import com.example.bot_task_etc.handle.NoteCommandHandle;
+import com.example.bot_task_etc.handle.ReminderCommandHandle;
+import com.example.bot_task_etc.service.UserService;
 import com.example.bot_task_etc.state.NoteStateTracker;
 import com.example.bot_task_etc.state.ReminderStateTracker;
 import jakarta.annotation.PostConstruct;
@@ -29,6 +30,7 @@ public class AssistantBot extends TelegramLongPollingBot {
     private final ReminderStateTracker stateTracker;
     private final NoteCommandHandle noteCommandHandle;
     private final NoteStateTracker noteStateTracker;
+    private final UserService userService;
 
     @Value("${telegrambots.bots.username}")
     private String botUsername;
@@ -55,6 +57,7 @@ public class AssistantBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (!update.hasMessage() || !update.getMessage().hasText()){
+            userService.registerUser(update.getMessage().getFrom());
             return;
         }
 
