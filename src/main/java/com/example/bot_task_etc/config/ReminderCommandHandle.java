@@ -1,6 +1,5 @@
 package com.example.bot_task_etc.config;
 
-import com.example.bot_task_etc.bot.AssistantBot;
 import com.example.bot_task_etc.model.Reminder;
 import com.example.bot_task_etc.service.ReminderService;
 import com.example.bot_task_etc.state.ReminderStateTracker;
