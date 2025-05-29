@@ -13,6 +13,7 @@ public class ReminderStateTracker {
         AWAITING_NEW_REMINDER_TEXT,
         AWAITING_REMINDER_TIME,
         AWAITING_REMINDER_TO_EDIT,
+        AWAITING_REMINDER_TO_EDIT_TIME,
         AWAITING_REMINDER_TO_DELETE,
     }
 

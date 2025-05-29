@@ -43,8 +43,22 @@ public class ReminderCommandHandle {
             }
             case AWAITING_REMINDER_TO_EDIT -> {
                 tracker.setTempReminderTexts(chatId, text);
-                tracker.setState(chatId, ReminderStateTracker.State.AWAITING_REMINDER_TIME);
+                tracker.setState(chatId, ReminderStateTracker.State.AWAITING_REMINDER_TO_EDIT_TIME);
                 sendText(sender, chatId, "Введите новую дату и время напоминания в формате 'yyyy-MM-dd HH:mm");
+            }
+            case AWAITING_REMINDER_TO_EDIT_TIME -> {
+                try {
+                    LocalDateTime dateTime = LocalDateTime.parse(text, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                    String newText = tracker.getTempReminderTexts(chatId);
+                    reminderService.editReminder(chatId, newText, dateTime);
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                    String formattedDateTime = dateTime.format(formatter);
+                    sendText(sender, chatId, "Напоминание сохранено на: " + formattedDateTime);
+                } catch (DateTimeParseException e) {
+                    sendText(sender, chatId, "Неверный формат даты и времени. Повторите ввод");
+                    return;
+                }
+                tracker.clear(chatId);
             }
             case AWAITING_REMINDER_TO_DELETE -> {
                 boolean deleted = reminderService.deleteReminder(chatId, text);
@@ -65,10 +79,11 @@ public class ReminderCommandHandle {
             sendText(sender, chatId, "У вас нет напоминаний");
         } else {
             StringBuilder sb = new StringBuilder("Ваши напоминания: \n");
-            reminders.forEach(reminder -> sb.append("- ")
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            reminders.forEach(reminder -> sb.append(reminder.getId())
                     .append(reminder.getText())
                     .append("(на ")
-                    .append(reminder.getTime())
+                    .append(reminder.getTime().format(formatter))
                     .append(")\n"));
             sendText(sender, chatId, sb.toString());
         }

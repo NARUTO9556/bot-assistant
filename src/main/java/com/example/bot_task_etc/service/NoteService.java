@@ -5,6 +5,7 @@ import com.example.bot_task_etc.repository.NoteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -15,9 +16,9 @@ public class NoteService {
 
     public void saveNote(Long chatId, String text) {
         Note note = new Note();
-//        note.setId(UUID.randomUUID().toString());
         note.setChatId(chatId);
         note.setText(text);
+        note.setCreateAt(LocalDateTime.now());
         noteRepository.save(note);
     }
 

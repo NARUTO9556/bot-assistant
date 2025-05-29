@@ -1,5 +1,6 @@
 package com.example.bot_task_etc.bot;
 
+import com.example.bot_task_etc.config.KeyboardConfig;
 import com.example.bot_task_etc.handle.NoteCommandHandle;
 import com.example.bot_task_etc.handle.ReminderCommandHandle;
 import com.example.bot_task_etc.service.UserService;
@@ -14,9 +15,6 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
@@ -31,6 +29,7 @@ public class AssistantBot extends TelegramLongPollingBot {
     private final NoteCommandHandle noteCommandHandle;
     private final NoteStateTracker noteStateTracker;
     private final UserService userService;
+    private final KeyboardConfig keyboardConfig;
 
     @Value("${telegrambots.bots.username}")
     private String botUsername;
@@ -57,10 +56,18 @@ public class AssistantBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (!update.hasMessage() || !update.getMessage().hasText()){
-            userService.registerUser(update.getMessage().getFrom());
             return;
         }
 
+        var message = update.getMessage();
+        userService.registerUser(message);
+        if (message.hasText()) {
+            String text = message.getText();
+            Long chatId = message.getChatId();
+            if ("/start".equals(text)) {
+                sendText(chatId, "Привет!");
+            }
+        }
         String text = update.getMessage().getText();
         Long chatId = update.getMessage().getChatId();
 
@@ -75,30 +82,22 @@ public class AssistantBot extends TelegramLongPollingBot {
         }
 
         switch (text) {
-            case "/start"-> sendMenu(chatId);
-            case "📝 Заметки"-> sendNoteMenu(chatId);
-            case "⏰ Напоминания"-> sendReminderMenu(chatId);
+            case "/start", "🔙 Назад" -> sendMenu(chatId, "Выберите раздел:");
+
+            case "📝 Заметки"->
+                    sendKeyboard(chatId, "Выберите действие с заметками:", keyboardConfig.getNoteMenuKeyboard());
+            case "⏰ Напоминания"->
+                    sendKeyboard(chatId, "Выберите действие с напоминаниями:", keyboardConfig.getReminderMenuKeyboard());
 
             case "➕ Новая заметка"-> noteCommandHandle.handleNewNote(chatId, this);
             case "📋 Список заметок"-> noteCommandHandle.handleListNotes(chatId, this);
-            case "✏️ Редактировать"-> noteCommandHandle.handleEditNote(chatId, this);
+            case "✏️ Изменить заметку"-> noteCommandHandle.handleEditNote(chatId, this);
             case "❌ Удалить заметку"-> noteCommandHandle.handleDeleteNote(chatId, this);
 
             case "➕ Новое напоминание"-> reminderCommandHandle.handleNewReminder(chatId, this);
             case "📋 Список напоминаний"-> reminderCommandHandle.handleListReminders(chatId, this);
             case "✏️ Изменить напоминание"-> reminderCommandHandle.handleEditReminders(chatId, this);
             case "❌ Удалить напоминание"-> reminderCommandHandle.handleDeleteReminders(chatId, this);
-            case "🔙 Назад" -> {
-                SendMessage msg = new SendMessage();
-                msg.setChatId(chatId.toString());
-                msg.setText("Вы вернулись в главное меню.");
-                msg.setReplyMarkup(sendMenu(chatId));
-                try {
-                    execute(msg);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
-            }
             default -> {
                 sendText(chatId, "Неизвестная команда. Используйте /start.");
             }
@@ -107,7 +106,9 @@ public class AssistantBot extends TelegramLongPollingBot {
     }
 
     private void sendText(Long chatId, String text) {
-        SendMessage msg = new SendMessage(chatId.toString(), text);
+        SendMessage msg = new SendMessage();
+        msg.setChatId(chatId.toString());
+        msg.setText(text);
         try {
             execute(msg);
         } catch (TelegramApiException e) {
@@ -115,54 +116,20 @@ public class AssistantBot extends TelegramLongPollingBot {
         }
     }
 
-    private ReplyKeyboard sendMenu(Long chatId) {
-        KeyboardRow row = new KeyboardRow();
-        row.add(new KeyboardButton("📝 Заметки"));
-        row.add(new KeyboardButton("⏰ Напоминания"));
-        return sendKeyboard(chatId, "Выберите раздел:", List.of(row));
-
+    private void sendMenu(Long chatId, String text) {
+        sendKeyboard(chatId,text, keyboardConfig.getMainMenuKeyboard());
     }
 
-    private void sendNoteMenu(Long chatId) {
-        KeyboardRow row1 = new KeyboardRow();
-        row1.add(new KeyboardButton("➕ Новая заметка"));
-        row1.add(new KeyboardButton("📋 Список заметок"));
-        KeyboardRow row2 = new KeyboardRow();
-        row2.add(new KeyboardButton("✏️ Редактировать"));
-        row2.add(new KeyboardButton("❌ Удалить заметку"));
-        KeyboardRow row3 = new KeyboardRow();
-        row3.add(new KeyboardButton("🔙 Назад"));
-        sendKeyboard(chatId, "Выберите действие с заметками:", List.of(row1, row2, row3));
-    }
 
-    private void sendReminderMenu(Long chatId) {
-        KeyboardRow row1 = new KeyboardRow();
-        row1.add(new KeyboardButton("➕ Новое напоминание"));
-        row1.add(new KeyboardButton("📋 Список напоминаний"));
-        KeyboardRow row2 = new KeyboardRow();
-        row2.add(new KeyboardButton("✏️ Изменить напоминание"));
-        row2.add(new KeyboardButton("❌ Удалить напоминание"));
-        KeyboardRow row3 = new KeyboardRow();
-        row3.add(new KeyboardButton("🔙 Назад"));
-        sendKeyboard(chatId, "Выберите действие с напоминаниями:", List.of(row1, row2, row3));
-    }
-
-    private ReplyKeyboard sendKeyboard(Long chatId, String text, List<KeyboardRow> rows) {
-        ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
-        keyboard.setKeyboard(rows);
-        keyboard.setResizeKeyboard(true);
-
-        SendMessage msg = SendMessage.builder()
-                .chatId(chatId.toString())
-                .text(text)
-                .replyMarkup(keyboard)
-                .build();
-
+    private void sendKeyboard(Long chatId, String text, ReplyKeyboard keyboard) {
+        SendMessage msg = new SendMessage();
+        msg.setChatId(chatId.toString());
+        msg.setText(text);
+        msg.setReplyMarkup(keyboard);
         try {
             execute(msg);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
-        return msg.getReplyMarkup();
     }
 }

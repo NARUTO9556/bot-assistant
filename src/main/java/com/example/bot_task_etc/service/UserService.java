@@ -1,12 +1,13 @@
 package com.example.bot_task_etc.service;
 
 import com.example.bot_task_etc.model.User;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import com.example.bot_task_etc.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+
 
 @Service
 @RequiredArgsConstructor
@@ -14,21 +15,21 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public void registerUser(org.telegram.telegrambots.meta.api.objects.User tgUser) {
-        Long id = tgUser.getId();
+    public void registerUser(Message message) {
+        org.telegram.telegrambots.meta.api.objects.User tgUser = message.getFrom();
+        Long chatId = message.getChatId();
 
-        Optional<User> existing = userRepository.findById(id);
-        if (existing.isPresent()) {
+        if (userRepository.existsById(chatId)) {
             return;
         }
 
-        User newUser = new User();
-        newUser.setId(id);
-        newUser.setFirstName(tgUser.getFirstName());
-        newUser.setLastName(tgUser.getLastName());
-        newUser.setUsername(tgUser.getUserName());
-        newUser.setRegisteredAt(LocalDateTime.now());
+        User user = new User();
+        user.setChatId(chatId);
+        user.setUsername(tgUser.getUserName());
+        user.setFirstName(tgUser.getFirstName());
+        user.setLastName(tgUser.getLastName());
+        user.setRegisteredAt(LocalDateTime.now());
 
-        userRepository.save(newUser);
+        userRepository.save(user);
     }
 }

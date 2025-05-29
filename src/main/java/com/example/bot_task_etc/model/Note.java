@@ -16,7 +16,6 @@ public class Note {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long userId;
     private Long chatId;
     private String text;
     private LocalDateTime createAt;
