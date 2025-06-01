@@ -18,8 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import java.util.List;
-
 @Component
 @RequiredArgsConstructor
 public class AssistantBot extends TelegramLongPollingBot {

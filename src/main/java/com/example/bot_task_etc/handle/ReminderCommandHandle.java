@@ -81,6 +81,7 @@ public class ReminderCommandHandle {
             StringBuilder sb = new StringBuilder("Ваши напоминания: \n");
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             reminders.forEach(reminder -> sb.append(reminder.getId())
+                    .append(": ")
                     .append(reminder.getText())
                     .append("(на ")
                     .append(reminder.getTime().format(formatter))

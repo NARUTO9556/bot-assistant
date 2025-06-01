@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 
 @Service
@@ -28,7 +29,7 @@ public class UserService {
         user.setUsername(tgUser.getUserName());
         user.setFirstName(tgUser.getFirstName());
         user.setLastName(tgUser.getLastName());
-        user.setRegisteredAt(LocalDateTime.now());
+        user.setRegisteredAt(LocalDateTime.now().withNano(0));
 
         userRepository.save(user);
     }

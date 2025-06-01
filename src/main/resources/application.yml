@@ -31,3 +31,9 @@ springdoc:
           springframework:
             web: trace
           apache: trace
+          hibernate:
+            SQL: debug
+            type:
+              descriptor:
+                sql:
+                  BasicBinder: trace
